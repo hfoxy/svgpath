@@ -17,6 +17,7 @@ var numberRegExp = regexp.MustCompile(`-?[0-9]*\.?[0-9]+(?:e[-+]?\d+)?`)
 type Segment struct {
 	Command rune
 	Args    []float64
+	Raw     string
 }
 
 var length = make(map[rune]int)
@@ -50,11 +51,11 @@ func Parse(path string) ([]Segment, error) {
 
 		args, err2 := parseValues(segment[1:])
 		if err2 != nil {
-			return acc, err2
+			return acc, fmt.Errorf("malformed path data: '%c' => '%s': %w", command, segment, err2)
 		}
 
-		if t == 'm' || len(args) > 2 {
-			acc = append(acc, Segment{Command: t, Args: args})
+		if t == 'm' && len(args) > 2 {
+			acc = append(acc, Segment{Command: t, Args: args, Raw: segment})
 			t = 'l'
 			if command == 'M' {
 				command = 'L'
@@ -64,16 +65,20 @@ func Parse(path string) ([]Segment, error) {
 		}
 
 		for len(args) > 0 {
-			if len(args) == length[t] {
-				acc = append(acc, Segment{Command: command, Args: args})
+			expectedLength := length[t]
+			// log.Printf("command: %c, args: (expected %c:%d, got %d) => %v", command, t, length[t], len(args), args)
+
+			if len(args) == expectedLength {
+				acc = append(acc, Segment{Command: command, Args: args, Raw: segment})
 				break
 			}
 
-			if len(args) < length[t] {
+			if len(args) < expectedLength {
 				return acc, fmt.Errorf("malformed path data: '%c' must have %d elements and has %d: '%s'", command, length[t], len(args), segment)
 			}
 
-			acc = append(acc, Segment{Command: command, Args: args[:length[t]]})
+			args = args[expectedLength:]
+			acc = append(acc, Segment{Command: command, Args: args, Raw: segment})
 		}
 
 		return acc, nil
@@ -89,7 +94,7 @@ func Parse(path string) ([]Segment, error) {
 func parseValues(args string) ([]float64, error) {
 	numbers := numberRegExp.FindAllString(args, -1)
 	if numbers == nil || len(numbers) == 0 {
-		return nil, fmt.Errorf("invalid command, no numbers found in '%s'", args)
+		return []float64{}, nil
 	}
 
 	return reduceE(numbers, func(acc []float64, number string) ([]float64, error) {

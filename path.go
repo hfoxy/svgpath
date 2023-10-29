@@ -35,6 +35,10 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 
 	for i, segment := range segments {
 		if segment.Command == 'M' {
+			if len(segment.Args) != 2 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 2 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			cur = internal.Point{X: segment.Args[0], Y: segment.Args[1]}
 			ringStart = cur
 
@@ -43,65 +47,118 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 				r.initialPoint = cur
 			}
 		} else if segment.Command == 'm' {
+			if len(segment.Args) != 2 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 2 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			cur = internal.Point{X: segment.Args[0] + cur.X, Y: segment.Args[1] + cur.Y}
 			ringStart = cur
 			r.parts = append(r.parts, nil)
 		} else if segment.Command == 'L' {
-			r.Length += math.Sqrt(math.Pow(cur.X-segment.Args[1], 2) + math.Pow(cur.Y-segment.Args[2], 2))
-			r.parts = append(r.parts, internal.NewLinear(cur.X, segment.Args[1], cur.Y, segment.Args[2]))
-			cur = internal.Point{X: segment.Args[1], Y: segment.Args[2]}
+			if len(segment.Args) != 2 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 2 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			r.Length += math.Sqrt(math.Pow(cur.X-segment.Args[0], 2) + math.Pow(cur.Y-segment.Args[1], 2))
+			r.parts = append(r.parts, internal.NewLinear(cur.X, segment.Args[0], cur.Y, segment.Args[1]))
+			cur = internal.Point{X: segment.Args[0], Y: segment.Args[1]}
 		} else if segment.Command == 'l' {
-			r.Length += math.Sqrt(math.Pow(segment.Args[1], 2) + math.Pow(segment.Args[2], 2))
-			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X+segment.Args[1], cur.Y, cur.Y+segment.Args[2]))
-			cur = internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]}
+			if len(segment.Args) != 2 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 2 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			r.Length += math.Sqrt(math.Pow(segment.Args[0], 2) + math.Pow(segment.Args[1], 2))
+			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X+segment.Args[0], cur.Y, cur.Y+segment.Args[1]))
+			cur = internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]}
 		} else if segment.Command == 'H' {
-			r.Length += math.Abs(cur.X - segment.Args[1])
-			r.parts = append(r.parts, internal.NewLinear(cur.X, segment.Args[1], cur.Y, cur.Y))
-			cur = internal.Point{X: segment.Args[1], Y: cur.Y}
+			if len(segment.Args) != 1 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 1 element and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			r.Length += math.Abs(cur.X - segment.Args[0])
+			r.parts = append(r.parts, internal.NewLinear(cur.X, segment.Args[0], cur.Y, cur.Y))
+			cur = internal.Point{X: segment.Args[0], Y: cur.Y}
 		} else if segment.Command == 'h' {
-			r.Length += math.Abs(segment.Args[1])
-			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X+segment.Args[1], cur.Y, cur.Y))
-			cur = internal.Point{X: cur.X + segment.Args[1], Y: cur.Y}
+			if len(segment.Args) != 1 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 1 element and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			r.Length += math.Abs(segment.Args[0])
+			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X+segment.Args[0], cur.Y, cur.Y))
+			cur = internal.Point{X: cur.X + segment.Args[0], Y: cur.Y}
 		} else if segment.Command == 'V' {
-			r.Length += math.Abs(cur.Y - segment.Args[1])
-			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X, cur.Y, segment.Args[1]))
-			cur = internal.Point{X: cur.X, Y: segment.Args[1]}
+			if len(segment.Args) != 1 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 1 element and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			r.Length += math.Abs(cur.Y - segment.Args[0])
+			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X, cur.Y, segment.Args[0]))
+			cur = internal.Point{X: cur.X, Y: segment.Args[0]}
 		} else if segment.Command == 'v' {
-			r.Length += math.Abs(segment.Args[1])
-			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X, cur.Y, cur.Y+segment.Args[1]))
-			cur = internal.Point{X: cur.X, Y: cur.Y + segment.Args[1]}
+			if len(segment.Args) != 1 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 1 element and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			r.Length += math.Abs(segment.Args[0])
+			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X, cur.Y, cur.Y+segment.Args[0]))
+			cur = internal.Point{X: cur.X, Y: cur.Y + segment.Args[0]}
 		} else if segment.Command == 'z' || segment.Command == 'Z' {
+			if len(segment.Args) != 1 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 0 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			r.Length += math.Sqrt(math.Pow(ringStart.X-cur.X, 2) + math.Pow(ringStart.Y-cur.Y, 2))
 			r.parts = append(r.parts, internal.NewLinear(cur.X, ringStart.X, cur.Y, ringStart.Y))
 			cur = ringStart
 		} else if segment.Command == 'C' {
+			if len(segment.Args) != 6 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 6 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			curve = internal.NewBezier(
 				cur,
-				internal.Point{X: segment.Args[1], Y: segment.Args[2]},
-				internal.Point{X: segment.Args[3], Y: segment.Args[4]},
-				internal.Point{X: segment.Args[5], Y: segment.Args[6]},
+				internal.Point{X: segment.Args[0], Y: segment.Args[1]},
+				internal.Point{X: segment.Args[2], Y: segment.Args[3]},
+				internal.Point{X: segment.Args[4], Y: segment.Args[5]},
 			)
 
 			r.Length += curve.GetTotalLength()
 			r.parts = append(r.parts, curve)
-			cur = internal.Point{X: segment.Args[5], Y: segment.Args[6]}
+			cur = internal.Point{X: segment.Args[4], Y: segment.Args[5]}
 		} else if segment.Command == 'c' {
+			if len(segment.Args) != 6 {
+				recheckArgs, err2 := parseValues(segment.Raw[1:])
+				if err2 != nil {
+					return r, fmt.Errorf("malformed path data: '%c' => '%s': %w", segment.Command, segment.Raw, err2)
+				}
+
+				if len(recheckArgs) != 6 {
+					return r, fmt.Errorf("[recheck] malformed path data: '%c' must have 6 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+				}
+
+				return r, fmt.Errorf("malformed path data: '%c' must have 6 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			curve = internal.NewBezier(
 				cur,
-				internal.Point{X: segment.Args[1], Y: segment.Args[2]},
-				internal.Point{X: segment.Args[3], Y: segment.Args[4]},
-				internal.Point{X: segment.Args[5], Y: segment.Args[6]},
+				internal.Point{X: segment.Args[0], Y: segment.Args[1]},
+				internal.Point{X: segment.Args[2], Y: segment.Args[3]},
+				internal.Point{X: segment.Args[4], Y: segment.Args[5]},
 			)
 
 			l := curve.GetTotalLength()
 			if l > 0 {
 				r.Length += l
 				r.parts = append(r.parts, curve)
-				cur = internal.Point{X: cur.X + segment.Args[5], Y: cur.Y + segment.Args[6]}
+				cur = internal.Point{X: cur.X + segment.Args[4], Y: cur.Y + segment.Args[5]}
 			} else {
 				r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X, cur.Y, cur.Y))
 			}
 		} else if segment.Command == 'S' {
+			if len(segment.Args) != 4 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 4 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			prevSegment := segments[i-1]
 			if i > 0 && (prevSegment.Command == 'C' || prevSegment.Command == 'c' || prevSegment.Command == 'S' || prevSegment.Command == 's') {
 				if curve != internal.EmptyBezier {
@@ -109,25 +166,29 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 					curve = internal.NewBezier(
 						cur,
 						internal.Point{X: 2*cur.X - c.X, Y: 2*cur.Y - c.Y},
-						internal.Point{X: segment.Args[1], Y: segment.Args[2]},
-						internal.Point{X: segment.Args[3], Y: segment.Args[4]},
+						internal.Point{X: segment.Args[0], Y: segment.Args[1]},
+						internal.Point{X: segment.Args[2], Y: segment.Args[3]},
 					)
 				}
 			} else {
 				curve = internal.NewBezier(
 					cur,
 					cur,
-					internal.Point{X: segment.Args[1], Y: segment.Args[2]},
-					internal.Point{X: segment.Args[3], Y: segment.Args[4]},
+					internal.Point{X: segment.Args[0], Y: segment.Args[1]},
+					internal.Point{X: segment.Args[2], Y: segment.Args[3]},
 				)
 			}
 
 			if curve != internal.EmptyBezier {
 				r.Length += curve.GetTotalLength()
 				r.parts = append(r.parts, curve)
-				cur = internal.Point{X: segment.Args[3], Y: segment.Args[4]}
+				cur = internal.Point{X: segment.Args[2], Y: segment.Args[3]}
 			}
 		} else if segment.Command == 's' {
+			if len(segment.Args) != 4 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 4 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			prevSegment := segments[i-1]
 			if i > 0 && (prevSegment.Command == 'C' || prevSegment.Command == 'c' || prevSegment.Command == 'S' || prevSegment.Command == 's') {
 				if curve != internal.EmptyBezier {
@@ -136,15 +197,15 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 					curve = internal.NewBezier(
 						cur,
 						internal.Point{X: cur.X + d.X - c.X, Y: cur.Y + d.Y - c.Y},
-						internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]},
-						internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]},
+						internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]},
+						internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]},
 					)
 				} else {
 					curve = internal.NewBezier(
 						cur,
 						cur,
-						internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]},
-						internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]},
+						internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]},
+						internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]},
 					)
 				}
 			}
@@ -152,48 +213,60 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 			if curve != internal.EmptyBezier {
 				r.Length += curve.GetTotalLength()
 				r.parts = append(r.parts, curve)
-				cur = internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]}
+				cur = internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]}
 			}
 		} else if segment.Command == 'Q' {
-			if cur.X == segment.Args[1] && cur.Y == segment.Args[2] {
-				linearCurve := internal.NewLinear(segment.Args[1], segment.Args[3], segment.Args[2], segment.Args[4])
+			if len(segment.Args) != 4 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 4 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			if cur.X == segment.Args[0] && cur.Y == segment.Args[1] {
+				linearCurve := internal.NewLinear(segment.Args[0], segment.Args[2], segment.Args[1], segment.Args[3])
 				r.Length += linearCurve.GetTotalLength()
 				r.parts = append(r.parts, linearCurve)
 			} else {
 				curve = internal.NewBezier(
 					cur,
-					internal.Point{X: segment.Args[1], Y: segment.Args[2]},
-					internal.Point{X: segment.Args[3], Y: segment.Args[4]},
+					internal.Point{X: segment.Args[0], Y: segment.Args[1]},
+					internal.Point{X: segment.Args[2], Y: segment.Args[3]},
 					internal.EmptyPoint,
 				)
 
 				r.Length += curve.GetTotalLength()
 				r.parts = append(r.parts, curve)
-				cur = internal.Point{X: segment.Args[3], Y: segment.Args[4]}
+				cur = internal.Point{X: segment.Args[2], Y: segment.Args[3]}
 			}
 
-			cur = internal.Point{X: segment.Args[3], Y: segment.Args[4]}
-			prevPoint = internal.Point{X: segment.Args[1], Y: segment.Args[2]}
+			cur = internal.Point{X: segment.Args[2], Y: segment.Args[3]}
+			prevPoint = internal.Point{X: segment.Args[0], Y: segment.Args[1]}
 		} else if segment.Command == 'q' {
-			if segment.Args[1] != 0 && segment.Args[2] != 0 {
+			if len(segment.Args) != 4 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 4 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			if segment.Args[0] != 0 && segment.Args[1] != 0 {
 				curve = internal.NewBezier(
 					cur,
-					internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]},
-					internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]},
+					internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]},
+					internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]},
 					internal.EmptyPoint,
 				)
 
 				r.Length += curve.GetTotalLength()
 				r.parts = append(r.parts, curve)
 			} else {
-				linearCurve := internal.NewLinear(cur.X+segment.Args[1], cur.X+segment.Args[3], cur.Y+segment.Args[2], cur.Y+segment.Args[4])
+				linearCurve := internal.NewLinear(cur.X+segment.Args[0], cur.X+segment.Args[2], cur.Y+segment.Args[1], cur.Y+segment.Args[3])
 				r.Length += linearCurve.GetTotalLength()
 				r.parts = append(r.parts, linearCurve)
 			}
 
-			prevPoint = internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]}
-			cur = internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]}
+			prevPoint = internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]}
+			cur = internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]}
 		} else if segment.Command == 'T' {
+			if len(segment.Args) != 2 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 2 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			prevSegment := segments[i-1]
 			if i > 0 && (prevSegment.Command == 'Q' || prevSegment.Command == 'q' || prevSegment.Command == 'T' || prevSegment.Command == 't') {
 				if curve != internal.EmptyBezier {
@@ -201,7 +274,7 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 					curve = internal.NewBezier(
 						cur,
 						internal.Point{X: 2*cur.X - c.X, Y: 2*cur.Y - c.Y},
-						internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+						internal.Point{X: segment.Args[0], Y: segment.Args[1]},
 						internal.EmptyPoint,
 					)
 				}
@@ -209,7 +282,7 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 				curve = internal.NewBezier(
 					cur,
 					cur,
-					internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+					internal.Point{X: segment.Args[0], Y: segment.Args[1]},
 					internal.EmptyPoint,
 				)
 			}
@@ -217,15 +290,19 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 			if curve != internal.EmptyBezier {
 				r.Length += curve.GetTotalLength()
 				r.parts = append(r.parts, curve)
-				cur = internal.Point{X: segment.Args[1], Y: segment.Args[2]}
+				cur = internal.Point{X: segment.Args[0], Y: segment.Args[1]}
 			}
 		} else if segment.Command == 't' {
+			if len(segment.Args) != 2 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 2 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			prevSegment := segments[i-1]
 			if i > 0 && (prevSegment.Command == 'Q' || prevSegment.Command == 'q' || prevSegment.Command == 'T' || prevSegment.Command == 't') {
 				curve = internal.NewBezier(
 					cur,
 					internal.Point{X: 2*cur.X - prevPoint.X, Y: 2*cur.Y - prevPoint.Y},
-					internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+					internal.Point{X: segment.Args[0], Y: segment.Args[1]},
 					internal.EmptyPoint,
 				)
 
@@ -234,9 +311,9 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 			} else {
 				linear := internal.NewLinear(
 					cur.X,
-					segment.Args[1],
+					segment.Args[0],
 					cur.Y,
-					segment.Args[2],
+					segment.Args[1],
 				)
 
 				r.Length += linear.GetTotalLength()
@@ -244,39 +321,47 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 			}
 
 			prevPoint = internal.Point{X: 2*cur.X - prevPoint.X, Y: 2*cur.Y - prevPoint.Y}
-			cur = internal.Point{X: segment.Args[1], Y: segment.Args[2]}
+			cur = internal.Point{X: segment.Args[0], Y: segment.Args[1]}
 		} else if segment.Command == 'A' {
+			if len(segment.Args) != 7 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 7 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			arc := internal.NewArc(
 				cur.X,
 				cur.Y,
+				segment.Args[0],
 				segment.Args[1],
 				segment.Args[2],
-				segment.Args[3],
+				segment.Args[3] == 1,
 				segment.Args[4] == 1,
-				segment.Args[5] == 1,
+				segment.Args[5],
 				segment.Args[6],
-				segment.Args[7],
 			)
 
 			r.Length += arc.GetTotalLength()
 			r.parts = append(r.parts, arc)
-			cur = internal.Point{X: segment.Args[6], Y: segment.Args[7]}
+			cur = internal.Point{X: segment.Args[5], Y: segment.Args[6]}
 		} else if segment.Command == 'a' {
+			if len(segment.Args) != 7 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 7 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
 			arc := internal.NewArc(
 				cur.X,
 				cur.Y,
+				segment.Args[0],
 				segment.Args[1],
 				segment.Args[2],
-				segment.Args[3],
+				segment.Args[3] == 1,
 				segment.Args[4] == 1,
-				segment.Args[5] == 1,
-				cur.X+segment.Args[6],
-				cur.Y+segment.Args[7],
+				cur.X+segment.Args[5],
+				cur.Y+segment.Args[6],
 			)
 
 			r.Length += arc.GetTotalLength()
 			r.parts = append(r.parts, arc)
-			cur = internal.Point{X: cur.X + segment.Args[6], Y: cur.Y + segment.Args[7]}
+			cur = internal.Point{X: cur.X + segment.Args[5], Y: cur.Y + segment.Args[6]}
 		}
 
 		r.partialLengths = append(r.partialLengths, r.Length)
