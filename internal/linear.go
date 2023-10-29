@@ -33,7 +33,7 @@ func (l Linear) GetTotalLength() float64 {
 	return l.length
 }
 
-func (l Linear) GetPointAtLength(pos float64) Point {
+func (l Linear) GetPointAtLength(pos float64) (Point, error) {
 	fraction := pos / l.length
 
 	newDeltaX := (l.x1 - l.x0) * fraction
@@ -41,19 +41,19 @@ func (l Linear) GetPointAtLength(pos float64) Point {
 	return Point{
 		X: l.x0 + newDeltaX,
 		Y: l.y0 + newDeltaY,
-	}
+	}, nil
 }
 
-func (l Linear) GetTangentAtLength(_ float64) Point {
-	return l.tangent
+func (l Linear) GetTangentAtLength(_ float64) (Point, error) {
+	return l.tangent, nil
 }
 
-func (l Linear) GetPropertiesAtLength(pos float64) PointProperties {
-	point := l.GetPointAtLength(pos)
+func (l Linear) GetPropertiesAtLength(pos float64) (PointProperties, error) {
+	point, _ := l.GetPointAtLength(pos)
 	return PointProperties{
 		X:        point.X,
 		Y:        point.Y,
 		TangentX: l.tangent.X,
 		TangentY: l.tangent.Y,
-	}
+	}, nil
 }

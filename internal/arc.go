@@ -47,7 +47,7 @@ func (a Arc) GetTotalLength() float64 {
 	return a.length
 }
 
-func (a Arc) GetPointAtLength(pos float64) Point {
+func (a Arc) GetPointAtLength(pos float64) (Point, error) {
 	point := pointOnEllipticalArc(
 		Point{X: a.x0, Y: a.y0},
 		Point{X: a.rx, Y: a.ry},
@@ -58,10 +58,10 @@ func (a Arc) GetPointAtLength(pos float64) Point {
 		pos/a.length,
 	)
 
-	return point.ToPoint()
+	return point.ToPoint(), nil
 }
 
-func (a Arc) GetTangentAtLength(fractionLength float64) Point {
+func (a Arc) GetTangentAtLength(fractionLength float64) (Point, error) {
 	if fractionLength < 0 {
 		fractionLength = 0
 	} else if fractionLength > a.length {
@@ -70,13 +70,13 @@ func (a Arc) GetTangentAtLength(fractionLength float64) Point {
 
 	// there's a note on this in the original source that this needs testing
 	pointDist := .05
-	p1 := a.GetPointAtLength(fractionLength - pointDist)
+	p1, _ := a.GetPointAtLength(fractionLength - pointDist)
 
 	var p2 Point
 	if fractionLength < a.length-pointDist {
-		p2 = a.GetPointAtLength(fractionLength - pointDist)
+		p2, _ = a.GetPointAtLength(fractionLength - pointDist)
 	} else {
-		p2 = a.GetPointAtLength(fractionLength + pointDist)
+		p2, _ = a.GetPointAtLength(fractionLength + pointDist)
 	}
 
 	xDist := p2.X - p1.X
@@ -84,22 +84,22 @@ func (a Arc) GetTangentAtLength(fractionLength float64) Point {
 	dist := math.Sqrt(xDist*xDist + yDist*yDist)
 
 	if fractionLength < a.length-pointDist {
-		return Point{X: -xDist / dist, Y: -yDist / dist}
+		return Point{X: -xDist / dist, Y: -yDist / dist}, nil
 	} else {
-		return Point{X: xDist / dist, Y: yDist / dist}
+		return Point{X: xDist / dist, Y: yDist / dist}, nil
 	}
 }
 
-func (a Arc) GetPropertiesAtLength(fractionLength float64) PointProperties {
-	tangent := a.GetTangentAtLength(fractionLength)
-	point := a.GetPointAtLength(fractionLength)
+func (a Arc) GetPropertiesAtLength(fractionLength float64) (PointProperties, error) {
+	tangent, _ := a.GetTangentAtLength(fractionLength)
+	point, _ := a.GetPointAtLength(fractionLength)
 
 	return PointProperties{
 		X:        point.X,
 		Y:        point.Y,
 		TangentX: tangent.X,
 		TangentY: tangent.Y,
-	}
+	}, nil
 }
 
 type PointOnEllipticalArc struct {

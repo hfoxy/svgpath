@@ -7,6 +7,7 @@ type BezierType string
 const (
 	BezierTypeCubic     BezierType = "cubic"
 	BezierTypeQuadratic BezierType = "quadratic"
+	BezierTypeEmpty     BezierType = "empty"
 )
 
 type Bezier struct {
@@ -16,6 +17,15 @@ type Bezier struct {
 	d          Point
 	bezierType BezierType
 	length     float64
+}
+
+var EmptyBezier = Bezier{
+	a:          EmptyPoint,
+	b:          EmptyPoint,
+	c:          EmptyPoint,
+	d:          EmptyPoint,
+	bezierType: BezierTypeEmpty,
+	length:     0,
 }
 
 func NewBezier(a Point, b Point, c Point, d Point) Bezier {
@@ -70,17 +80,17 @@ func (b Bezier) GetTotalLength() float64 {
 	return b.length
 }
 
-func (b Bezier) GetPointAtLength(pos float64) Point {
+func (b Bezier) GetPointAtLength(pos float64) (Point, error) {
 	xs := []float64{b.a.X, b.b.X, b.c.X, b.d.X}
 	ys := []float64{b.a.Y, b.b.Y, b.c.Y, b.d.Y}
 	t := t2length(pos, b.length, func(t float64) float64 {
 		return b.GetArcLength(xs, ys, t)
 	})
 
-	return b.GetPoint(xs, ys, t)
+	return b.GetPoint(xs, ys, t), nil
 }
 
-func (b Bezier) GetTangentAtLength(pos float64) Point {
+func (b Bezier) GetTangentAtLength(pos float64) (Point, error) {
 	xs := []float64{b.a.X, b.b.X, b.c.X, b.d.X}
 	ys := []float64{b.a.Y, b.b.Y, b.c.Y, b.d.Y}
 	t := t2length(pos, b.length, func(t float64) float64 {
@@ -97,10 +107,10 @@ func (b Bezier) GetTangentAtLength(pos float64) Point {
 		tangent = Point{X: 0, Y: 0}
 	}
 
-	return tangent
+	return tangent, nil
 }
 
-func (b Bezier) GetPropertiesAtLength(pos float64) PointProperties {
+func (b Bezier) GetPropertiesAtLength(pos float64) (PointProperties, error) {
 	xs := []float64{b.a.X, b.b.X, b.c.X, b.d.X}
 	ys := []float64{b.a.Y, b.b.Y, b.c.Y, b.d.Y}
 	t := t2length(pos, b.length, func(t float64) float64 {
@@ -123,5 +133,13 @@ func (b Bezier) GetPropertiesAtLength(pos float64) PointProperties {
 		Y:        point.Y,
 		TangentX: tangent.X,
 		TangentY: tangent.Y,
-	}
+	}, nil
+}
+
+func (b Bezier) GetC() Point {
+	return b.c
+}
+
+func (b Bezier) GetD() Point {
+	return b.d
 }

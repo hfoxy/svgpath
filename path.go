@@ -1,6 +1,7 @@
 package svgpath
 
 import (
+	"fmt"
 	"github.com/hfoxy/svgpath/internal"
 	"math"
 )
@@ -29,7 +30,7 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 	cur := internal.Point{X: 0, Y: 0}
 	prevPoint := internal.Point{X: 0, Y: 0}
 
-	var curve internal.Bezier
+	curve := internal.EmptyBezier
 	ringStart := internal.Point{X: 0, Y: 0}
 
 	for i, segment := range segments {
@@ -100,8 +101,283 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 			} else {
 				r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X, cur.Y, cur.Y))
 			}
+		} else if segment.Command == 'S' {
+			prevSegment := segments[i-1]
+			if i > 0 && (prevSegment.Command == 'C' || prevSegment.Command == 'c' || prevSegment.Command == 'S' || prevSegment.Command == 's') {
+				if curve != internal.EmptyBezier {
+					c := curve.GetC()
+					curve = internal.NewBezier(
+						cur,
+						internal.Point{X: 2*cur.X - c.X, Y: 2*cur.Y - c.Y},
+						internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+						internal.Point{X: segment.Args[3], Y: segment.Args[4]},
+					)
+				}
+			} else {
+				curve = internal.NewBezier(
+					cur,
+					cur,
+					internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+					internal.Point{X: segment.Args[3], Y: segment.Args[4]},
+				)
+			}
+
+			if curve != internal.EmptyBezier {
+				r.Length += curve.GetTotalLength()
+				r.parts = append(r.parts, curve)
+				cur = internal.Point{X: segment.Args[3], Y: segment.Args[4]}
+			}
+		} else if segment.Command == 's' {
+			prevSegment := segments[i-1]
+			if i > 0 && (prevSegment.Command == 'C' || prevSegment.Command == 'c' || prevSegment.Command == 'S' || prevSegment.Command == 's') {
+				if curve != internal.EmptyBezier {
+					c := curve.GetC()
+					d := curve.GetD()
+					curve = internal.NewBezier(
+						cur,
+						internal.Point{X: cur.X + d.X - c.X, Y: cur.Y + d.Y - c.Y},
+						internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]},
+						internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]},
+					)
+				} else {
+					curve = internal.NewBezier(
+						cur,
+						cur,
+						internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]},
+						internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]},
+					)
+				}
+			}
+
+			if curve != internal.EmptyBezier {
+				r.Length += curve.GetTotalLength()
+				r.parts = append(r.parts, curve)
+				cur = internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]}
+			}
+		} else if segment.Command == 'Q' {
+			if cur.X == segment.Args[1] && cur.Y == segment.Args[2] {
+				linearCurve := internal.NewLinear(segment.Args[1], segment.Args[3], segment.Args[2], segment.Args[4])
+				r.Length += linearCurve.GetTotalLength()
+				r.parts = append(r.parts, linearCurve)
+			} else {
+				curve = internal.NewBezier(
+					cur,
+					internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+					internal.Point{X: segment.Args[3], Y: segment.Args[4]},
+					internal.EmptyPoint,
+				)
+
+				r.Length += curve.GetTotalLength()
+				r.parts = append(r.parts, curve)
+				cur = internal.Point{X: segment.Args[3], Y: segment.Args[4]}
+			}
+
+			cur = internal.Point{X: segment.Args[3], Y: segment.Args[4]}
+			prevPoint = internal.Point{X: segment.Args[1], Y: segment.Args[2]}
+		} else if segment.Command == 'q' {
+			if segment.Args[1] != 0 && segment.Args[2] != 0 {
+				curve = internal.NewBezier(
+					cur,
+					internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]},
+					internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]},
+					internal.EmptyPoint,
+				)
+
+				r.Length += curve.GetTotalLength()
+				r.parts = append(r.parts, curve)
+			} else {
+				linearCurve := internal.NewLinear(cur.X+segment.Args[1], cur.X+segment.Args[3], cur.Y+segment.Args[2], cur.Y+segment.Args[4])
+				r.Length += linearCurve.GetTotalLength()
+				r.parts = append(r.parts, linearCurve)
+			}
+
+			prevPoint = internal.Point{X: cur.X + segment.Args[1], Y: cur.Y + segment.Args[2]}
+			cur = internal.Point{X: cur.X + segment.Args[3], Y: cur.Y + segment.Args[4]}
+		} else if segment.Command == 'T' {
+			prevSegment := segments[i-1]
+			if i > 0 && (prevSegment.Command == 'Q' || prevSegment.Command == 'q' || prevSegment.Command == 'T' || prevSegment.Command == 't') {
+				if curve != internal.EmptyBezier {
+					c := curve.GetC()
+					curve = internal.NewBezier(
+						cur,
+						internal.Point{X: 2*cur.X - c.X, Y: 2*cur.Y - c.Y},
+						internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+						internal.EmptyPoint,
+					)
+				}
+			} else {
+				curve = internal.NewBezier(
+					cur,
+					cur,
+					internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+					internal.EmptyPoint,
+				)
+			}
+
+			if curve != internal.EmptyBezier {
+				r.Length += curve.GetTotalLength()
+				r.parts = append(r.parts, curve)
+				cur = internal.Point{X: segment.Args[1], Y: segment.Args[2]}
+			}
+		} else if segment.Command == 't' {
+			prevSegment := segments[i-1]
+			if i > 0 && (prevSegment.Command == 'Q' || prevSegment.Command == 'q' || prevSegment.Command == 'T' || prevSegment.Command == 't') {
+				curve = internal.NewBezier(
+					cur,
+					internal.Point{X: 2*cur.X - prevPoint.X, Y: 2*cur.Y - prevPoint.Y},
+					internal.Point{X: segment.Args[1], Y: segment.Args[2]},
+					internal.EmptyPoint,
+				)
+
+				r.Length += curve.GetTotalLength()
+				r.parts = append(r.parts, curve)
+			} else {
+				linear := internal.NewLinear(
+					cur.X,
+					segment.Args[1],
+					cur.Y,
+					segment.Args[2],
+				)
+
+				r.Length += linear.GetTotalLength()
+				r.parts = append(r.parts, linear)
+			}
+
+			prevPoint = internal.Point{X: 2*cur.X - prevPoint.X, Y: 2*cur.Y - prevPoint.Y}
+			cur = internal.Point{X: segment.Args[1], Y: segment.Args[2]}
+		} else if segment.Command == 'A' {
+			arc := internal.NewArc(
+				cur.X,
+				cur.Y,
+				segment.Args[1],
+				segment.Args[2],
+				segment.Args[3],
+				segment.Args[4] == 1,
+				segment.Args[5] == 1,
+				segment.Args[6],
+				segment.Args[7],
+			)
+
+			r.Length += arc.GetTotalLength()
+			r.parts = append(r.parts, arc)
+			cur = internal.Point{X: segment.Args[6], Y: segment.Args[7]}
+		} else if segment.Command == 'a' {
+			arc := internal.NewArc(
+				cur.X,
+				cur.Y,
+				segment.Args[1],
+				segment.Args[2],
+				segment.Args[3],
+				segment.Args[4] == 1,
+				segment.Args[5] == 1,
+				cur.X+segment.Args[6],
+				cur.Y+segment.Args[7],
+			)
+
+			r.Length += arc.GetTotalLength()
+			r.parts = append(r.parts, arc)
+			cur = internal.Point{X: cur.X + segment.Args[6], Y: cur.Y + segment.Args[7]}
 		}
+
+		r.partialLengths = append(r.partialLengths, r.Length)
 	}
 
 	return r, nil
+}
+
+type sVGPathPart struct {
+	fraction float64
+	i        int
+}
+
+func (p SVGPath) getPartAtLength(pos float64) sVGPathPart {
+	if pos < 0 {
+		pos = 0
+	} else if pos > p.Length {
+		pos = p.Length
+	}
+
+	i := len(p.partialLengths) - 1
+	for i > 0 && p.partialLengths[i] > pos {
+		i--
+	}
+	i++
+
+	return sVGPathPart{fraction: pos - p.partialLengths[i-1], i: i}
+}
+
+func (p SVGPath) GetTotalLength() float64 {
+	return p.Length
+}
+
+func (p SVGPath) GetPointAtLength(pos float64) (point internal.Point, err error) {
+	fractionPart := p.getPartAtLength(pos)
+	functionAtPart := p.parts[fractionPart.i]
+
+	if functionAtPart != nil {
+		return functionAtPart.GetPointAtLength(fractionPart.fraction)
+	} else if p.initialPoint != internal.EmptyPoint {
+		return p.initialPoint, nil
+	}
+
+	return internal.EmptyPoint, fmt.Errorf("wrong function at this part")
+}
+
+func (p SVGPath) GetTangentAtLength(pos float64) (internal.Point, error) {
+	fractionPart := p.getPartAtLength(pos)
+	functionAtPart := p.parts[fractionPart.i]
+
+	if functionAtPart != nil {
+		return functionAtPart.GetTangentAtLength(fractionPart.fraction)
+	} else if p.initialPoint != internal.EmptyPoint {
+		return internal.EmptyPoint, nil
+	}
+
+	return internal.EmptyPoint, fmt.Errorf("wrong function at this part")
+}
+
+func (p SVGPath) GetPropertiesAtLength(pos float64) (internal.PointProperties, error) {
+	fractionPart := p.getPartAtLength(pos)
+	functionAtPart := p.parts[fractionPart.i]
+
+	if functionAtPart != nil {
+		return functionAtPart.GetPropertiesAtLength(fractionPart.fraction)
+	} else if p.initialPoint != internal.EmptyPoint {
+		return internal.PointProperties{
+			X:        p.initialPoint.X,
+			Y:        p.initialPoint.Y,
+			TangentX: 0,
+			TangentY: 0,
+		}, nil
+	}
+
+	return internal.PointProperties{}, fmt.Errorf("wrong function at this part")
+}
+
+func (p SVGPath) GetParts() ([]internal.PartProperties, error) {
+	parts := make([]internal.PartProperties, 0, len(p.parts))
+	for i, part := range p.parts {
+		if part != nil {
+			p0, err := part.GetPointAtLength(0)
+			if err != nil {
+				return nil, err
+			}
+
+			p1, err := part.GetPointAtLength(p.partialLengths[i] - p.partialLengths[i-1])
+			if err != nil {
+				return nil, err
+			}
+
+			parts = append(parts, internal.NewPartProperties(
+				p0,
+				p1,
+				p.partialLengths[i+1]-p.partialLengths[i],
+				part.GetPointAtLength,
+				part.GetTangentAtLength,
+				part.GetPropertiesAtLength,
+			))
+		}
+	}
+
+	return parts, nil
 }
