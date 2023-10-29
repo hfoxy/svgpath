@@ -19,9 +19,12 @@ type Part interface {
 	GetPropertiesAtLength(pos float64) PointProperties
 }
 
+var EmptyPoint = Point{blank: true}
+
 type Point struct {
-	X float64
-	Y float64
+	X     float64
+	Y     float64
+	blank bool
 }
 
 type PointProperties struct {
