@@ -18,3 +18,11 @@ func angleBetween(v0 Point, v1 Point) float64 {
 
 	return sign * math.Acos(p/n)
 }
+
+func reduce[T, M any](s []T, f func(M, T) M, initValue M) M {
+	acc := initValue
+	for _, v := range s {
+		acc = f(acc, v)
+	}
+	return acc
+}
