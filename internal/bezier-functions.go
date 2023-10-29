@@ -25,16 +25,15 @@ func cubicDerivative(xs []float64, ys []float64, t float64) Point {
 }
 
 func getCubicArcLength(xs []float64, ys []float64, t float64) float64 {
-	n := float64(20)
+	n := 20
 
-	z := t / n
-	sum := float64(0)
+	z := t / 2.0
+	sum := 0.0
 	var correctedT float64
 
-	nInt := int(n)
-	for i := 0; i < int(n); i++ {
-		correctedT = tValues[nInt][i] + z
-		sum += cValues[nInt][i] * bFunc(xs, ys, correctedT)
+	for i := 0; i < n; i++ {
+		correctedT = z*tValues[n][i] + z
+		sum += cValues[n][i] * bFunc(xs, ys, correctedT)
 	}
 
 	return z * sum

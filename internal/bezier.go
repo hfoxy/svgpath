@@ -38,7 +38,7 @@ func NewBezier(a Point, b Point, c Point, d Point) Bezier {
 		c: c,
 	}
 
-	if d.blank {
+	if !d.blank {
 		r.bezierType = BezierTypeCubic
 		r.d = d
 	} else {

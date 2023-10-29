@@ -132,9 +132,9 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 
 			curve = internal.NewBezier(
 				cur,
-				internal.Point{X: segment.Args[0], Y: segment.Args[1]},
-				internal.Point{X: segment.Args[2], Y: segment.Args[3]},
-				internal.Point{X: segment.Args[4], Y: segment.Args[5]},
+				internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]},
+				internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]},
+				internal.Point{X: cur.X + segment.Args[4], Y: cur.Y + segment.Args[5]},
 			)
 
 			l := curve.GetTotalLength()
@@ -191,20 +191,22 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 						internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]},
 						internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]},
 					)
-				} else {
-					curve = internal.NewBezier(
-						cur,
-						cur,
-						internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]},
-						internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]},
-					)
 				}
+			} else {
+				curve = internal.NewBezier(
+					cur,
+					cur,
+					internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]},
+					internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]},
+				)
 			}
 
 			if curve != internal.EmptyBezier {
 				r.Length += curve.GetTotalLength()
 				r.parts = append(r.parts, curve)
 				cur = internal.Point{X: cur.X + segment.Args[2], Y: cur.Y + segment.Args[3]}
+			} else {
+				return r, fmt.Errorf("curve returned no result")
 			}
 		} else if segment.Command == 'Q' {
 			if len(segment.Args) != 4 {
