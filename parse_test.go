@@ -88,19 +88,18 @@ func TestParseValues(t *testing.T) {
 		t.Fatalf("expected 6 values, got %d", len(values))
 	}
 
-	epsilon := 0.000001
-	if inDelta(0, 9.6, epsilon) {
-		t.Fatalf("expected 9.6, got %f", values[0])
-	} else if inDelta(1, 20.6, epsilon) {
-		t.Fatalf("expected 20.6, got %f", values[1])
-	} else if inDelta(2, 24.4, epsilon) {
-		t.Fatalf("expected 24.4, got %f", values[2])
-	} else if inDelta(3, 39.3, epsilon) {
-		t.Fatalf("expected 39.3, got %f", values[3])
-	} else if inDelta(4, 45.2, epsilon) {
-		t.Fatalf("expected 45.2, got %f", values[4])
-	} else if inDelta(5, 57.1, epsilon) {
-		t.Fatalf("expected 57.1, got %f", values[5])
+	if !inDelta(values[0], -9.6, epsilon) {
+		t.Fatalf("expected -9.6, got %f", values[0])
+	} else if !inDelta(values[1], -20.6, epsilon) {
+		t.Fatalf("expected -20.6, got %f", values[1])
+	} else if !inDelta(values[2], -24.4, epsilon) {
+		t.Fatalf("expected -24.4, got %f", values[2])
+	} else if !inDelta(values[3], -39.3, epsilon) {
+		t.Fatalf("expected -39.3, got %f", values[3])
+	} else if !inDelta(values[4], -45.2, epsilon) {
+		t.Fatalf("expected -45.2, got %f", values[4])
+	} else if !inDelta(values[5], -57.1, epsilon) {
+		t.Fatalf("expected -57.1, got %f", values[5])
 	}
 }
 
@@ -417,6 +416,236 @@ func TestOverloadedMoveTo2(t *testing.T) {
 		t.Fatalf("expected s4.Args to have 0 values, got %d", len(s4.Args))
 	}
 }
+
+func TestCurveTo(t *testing.T) {
+	segmentsA, err := Parse("c 50,0 50,100 100,100 50,0 50,-100 100,-100")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(segmentsA) != 2 {
+		t.Fatalf("expected 2 segments, got %d", len(segmentsA))
+	}
+
+	sA0 := segmentsA[0]
+	if sA0.Command != 'c' {
+		t.Fatalf("expected sA0.Command to be 'c', got %c", sA0.Command)
+	} else if len(sA0.Args) != 6 {
+		t.Fatalf("expected sA0.Args to have 6 values, got %d", len(sA0.Args))
+	} else if !inDelta(sA0.Args[0], 50, epsilon) {
+		t.Fatalf("expected sA0.Args[0] to be 50, got %f", sA0.Args[0])
+	} else if !inDelta(sA0.Args[1], 0, epsilon) {
+		t.Fatalf("expected sA0.Args[1] to be 0, got %f", sA0.Args[1])
+	} else if !inDelta(sA0.Args[2], 50, epsilon) {
+		t.Fatalf("expected sA0.Args[2] to be 50, got %f", sA0.Args[2])
+	} else if !inDelta(sA0.Args[3], 100, epsilon) {
+		t.Fatalf("expected sA0.Args[3] to be 100, got %f", sA0.Args[3])
+	} else if !inDelta(sA0.Args[4], 100, epsilon) {
+		t.Fatalf("expected sA0.Args[4] to be 100, got %f", sA0.Args[4])
+	} else if !inDelta(sA0.Args[5], 100, epsilon) {
+		t.Fatalf("expected sA0.Args[5] to be 100, got %f", sA0.Args[5])
+	}
+
+	sA1 := segmentsA[1]
+	if sA1.Command != 'c' {
+		t.Fatalf("expected sA1.Command to be 'c', got %c", sA1.Command)
+	} else if len(sA1.Args) != 6 {
+		t.Fatalf("expected sA1.Args to have 6 values, got %d", len(sA1.Args))
+	} else if !inDelta(sA1.Args[0], 50, epsilon) {
+		t.Fatalf("expected sA1.Args[0] to be 50, got %f", sA1.Args[0])
+	} else if !inDelta(sA1.Args[1], 0, epsilon) {
+		t.Fatalf("expected sA1.Args[1] to be 0, got %f", sA1.Args[1])
+	} else if !inDelta(sA1.Args[2], 50, epsilon) {
+		t.Fatalf("expected sA1.Args[2] to be 50, got %f", sA1.Args[2])
+	} else if !inDelta(sA1.Args[3], -100, epsilon) {
+		t.Fatalf("expected sA1.Args[3] to be -100, got %f", sA1.Args[3])
+	} else if !inDelta(sA1.Args[4], 100, epsilon) {
+		t.Fatalf("expected sA1.Args[4] to be 100, got %f", sA1.Args[4])
+	} else if !inDelta(sA1.Args[5], -100, epsilon) {
+		t.Fatalf("expected sA1.Args[5] to be -100, got %f", sA1.Args[5])
+	}
+
+	segmentsB, err := Parse("c 50,0 50,100 100,100 c 50,0 50,-100 100,-100")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(segmentsB) != 2 {
+		t.Fatalf("expected 2 segments, got %d", len(segmentsA))
+	}
+
+	sA0 = segmentsB[0]
+	if sA0.Command != 'c' {
+		t.Fatalf("expected sA0.Command to be 'c', got %c", sA0.Command)
+	} else if len(sA0.Args) != 6 {
+		t.Fatalf("expected sA0.Args to have 6 values, got %d", len(sA0.Args))
+	} else if !inDelta(sA0.Args[0], 50, epsilon) {
+		t.Fatalf("expected sA0.Args[0] to be 50, got %f", sA0.Args[0])
+	} else if !inDelta(sA0.Args[1], 0, epsilon) {
+		t.Fatalf("expected sA0.Args[1] to be 0, got %f", sA0.Args[1])
+	} else if !inDelta(sA0.Args[2], 50, epsilon) {
+		t.Fatalf("expected sA0.Args[2] to be 50, got %f", sA0.Args[2])
+	} else if !inDelta(sA0.Args[3], 100, epsilon) {
+		t.Fatalf("expected sA0.Args[3] to be 100, got %f", sA0.Args[3])
+	} else if !inDelta(sA0.Args[4], 100, epsilon) {
+		t.Fatalf("expected sA0.Args[4] to be 100, got %f", sA0.Args[4])
+	} else if !inDelta(sA0.Args[5], 100, epsilon) {
+		t.Fatalf("expected sA0.Args[5] to be 100, got %f", sA0.Args[5])
+	}
+
+	sA1 = segmentsB[1]
+	if sA1.Command != 'c' {
+		t.Fatalf("expected sA1.Command to be 'c', got %c", sA1.Command)
+	} else if len(sA1.Args) != 6 {
+		t.Fatalf("expected sA1.Args to have 6 values, got %d", len(sA1.Args))
+	} else if !inDelta(sA1.Args[0], 50, epsilon) {
+		t.Fatalf("expected sA1.Args[0] to be 50, got %f", sA1.Args[0])
+	} else if !inDelta(sA1.Args[1], 0, epsilon) {
+		t.Fatalf("expected sA1.Args[1] to be 0, got %f", sA1.Args[1])
+	} else if !inDelta(sA1.Args[2], 50, epsilon) {
+		t.Fatalf("expected sA1.Args[2] to be 50, got %f", sA1.Args[2])
+	} else if !inDelta(sA1.Args[3], -100, epsilon) {
+		t.Fatalf("expected sA1.Args[3] to be -100, got %f", sA1.Args[3])
+	} else if !inDelta(sA1.Args[4], 100, epsilon) {
+		t.Fatalf("expected sA1.Args[4] to be 100, got %f", sA1.Args[4])
+	} else if !inDelta(sA1.Args[5], -100, epsilon) {
+		t.Fatalf("expected sA1.Args[5] to be -100, got %f", sA1.Args[5])
+	}
+}
+
+func TestArcTo(t *testing.T) {
+	segments, err := Parse("A 30 50 0 0 1 162.55 162.45")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(segments) != 1 {
+		t.Fatalf("expected 1 segment, got %d", len(segments))
+	}
+
+	s0 := segments[0]
+	if s0.Command != 'A' {
+		t.Fatalf("expected s0.Command to be 'A', got %c", s0.Command)
+	} else if len(s0.Args) != 7 {
+		t.Fatalf("expected s0.Args to have 7 values, got %d", len(s0.Args))
+	} else if !inDelta(s0.Args[0], 30, epsilon) {
+		t.Fatalf("expected s0.Args[0] to be 30, got %f", s0.Args[0])
+	} else if !inDelta(s0.Args[1], 50, epsilon) {
+		t.Fatalf("expected s0.Args[1] to be 50, got %f", s0.Args[1])
+	} else if !inDelta(s0.Args[2], 0, epsilon) {
+		t.Fatalf("expected s0.Args[2] to be 0, got %f", s0.Args[2])
+	} else if !inDelta(s0.Args[3], 0, epsilon) {
+		t.Fatalf("expected s0.Args[3] to be 0, got %f", s0.Args[3])
+	} else if !inDelta(s0.Args[4], 1, epsilon) {
+		t.Fatalf("expected s0.Args[4] to be 1, got %f", s0.Args[4])
+	} else if !inDelta(s0.Args[5], 162.55, epsilon) {
+		t.Fatalf("expected s0.Args[5] to be 162.55, got %f", s0.Args[5])
+	} else if !inDelta(s0.Args[6], 162.45, epsilon) {
+		t.Fatalf("expected s0.Args[6] to be 162.45, got %f", s0.Args[6])
+	}
+}
+
+func TestQuadraticCurveTo(t *testing.T) {
+	segments, err := Parse("M10 80 Q 95 10 180 80")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(segments) != 2 {
+		t.Fatalf("expected 2 segments, got %d", len(segments))
+	}
+
+	s0 := segments[0]
+	if s0.Command != 'M' {
+		t.Fatalf("expected s0.Command to be 'M', got %c", s0.Command)
+	} else if len(s0.Args) != 2 {
+		t.Fatalf("expected s0.Args to have 2 values, got %d", len(s0.Args))
+	} else if !inDelta(s0.Args[0], 10, epsilon) {
+		t.Fatalf("expected s0.Args[0] to be 10, got %f", s0.Args[0])
+	} else if !inDelta(s0.Args[1], 80, epsilon) {
+		t.Fatalf("expected s0.Args[1] to be 80, got %f", s0.Args[1])
+	}
+
+	s1 := segments[1]
+	if s1.Command != 'Q' {
+		t.Fatalf("expected s1.Command to be 'Q', got %c", s1.Command)
+	} else if len(s1.Args) != 4 {
+		t.Fatalf("expected s1.Args to have 4 values, got %d", len(s1.Args))
+	} else if !inDelta(s1.Args[0], 95, epsilon) {
+		t.Fatalf("expected s1.Args[0] to be 95, got %f", s1.Args[0])
+	} else if !inDelta(s1.Args[1], 10, epsilon) {
+		t.Fatalf("expected s1.Args[1] to be 10, got %f", s1.Args[1])
+	} else if !inDelta(s1.Args[2], 180, epsilon) {
+		t.Fatalf("expected s1.Args[2] to be 180, got %f", s1.Args[2])
+	} else if !inDelta(s1.Args[3], 80, epsilon) {
+		t.Fatalf("expected s1.Args[3] to be 80, got %f", s1.Args[3])
+	}
+}
+
+func TestSmoothCurveTo(t *testing.T) {
+	segments, err := Parse("S 1 2, 3 4")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(segments) != 1 {
+		t.Fatalf("expected 1 segments, got %d", len(segments))
+	}
+
+	s0 := segments[0]
+	if s0.Command != 'S' {
+		t.Fatalf("expected s0.Command to be 'S', got %c", s0.Command)
+	} else if len(s0.Args) != 4 {
+		t.Fatalf("expected s0.Args to have 4 values, got %d", len(s0.Args))
+	} else if !inDelta(s0.Args[0], 1, epsilon) {
+		t.Fatalf("expected s0.Args[0] to be 1, got %f", s0.Args[0])
+	} else if !inDelta(s0.Args[1], 2, epsilon) {
+		t.Fatalf("expected s0.Args[1] to be 2, got %f", s0.Args[1])
+	} else if !inDelta(s0.Args[2], 3, epsilon) {
+		t.Fatalf("expected s0.Args[2] to be 3, got %f", s0.Args[2])
+	} else if !inDelta(s0.Args[3], 4, epsilon) {
+		t.Fatalf("expected s0.Args[3] to be 4, got %f", s0.Args[3])
+	}
+}
+
+func TestSmoothQuadraticCurveTo(t *testing.T) {
+	// test.deepEqual(parse("T 1 -2e2"), [["T", 1, -2e2]]);
+	segments, err := Parse("T 1 -2e2")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(segments) != 1 {
+		t.Fatalf("expected 1 segments, got %d", len(segments))
+	}
+
+	s0 := segments[0]
+	if s0.Command != 'T' {
+		t.Fatalf("expected s0.Command to be 'T', got %c", s0.Command)
+	} else if len(s0.Args) != 2 {
+		t.Fatalf("expected s0.Args to have 2 values, got %d", len(s0.Args))
+	} else if !inDelta(s0.Args[0], 1, epsilon) {
+		t.Fatalf("expected s0.Args[0] to be 1, got %f", s0.Args[0])
+	} else if !inDelta(s0.Args[1], -2e2, epsilon) {
+		t.Fatalf("expected s0.Args[1] to be -2e2, got %f", s0.Args[1])
+	}
+}
+
+func TestInvalidT(t *testing.T) {
+	_, err := Parse("t 1 2 3")
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+}
+
+func TestInvalidEmptyString(t *testing.T) {
+	_, err := Parse("")
+	if err == nil {
+		t.Fatalf("expected error, got nil")
+	}
+}
+
+const epsilon = 0.000001
 
 func inDelta(a float64, b float64, epsilon float64) bool {
 	return math.Abs(a-b) < epsilon
