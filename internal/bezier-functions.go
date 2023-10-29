@@ -126,20 +126,36 @@ func getDerivative(derivative float64, t float64, vs []float64) float64 {
 	}
 }
 
-func t2length(length float64, totalLength float64, f func(t float64) float64) float64 {
+func t2length(length float64, totalLength float64, f func(t float64) (float64, error)) (float64, error) {
 	e := float64(1)
 	t := length / totalLength
-	step := (length - f(t)) / totalLength
+
+	fT, err := f(t)
+	if err != nil {
+		return 0, err
+	}
+
+	step := (length - fT) / totalLength
 
 	numIterations := 0
 	for e > 0.001 {
-		increasedTLength := f(t + step)
+		fTStep, err := f(t + step)
+		if err != nil {
+			return 0, err
+		}
+
+		increasedTLength := fTStep
 		increasedTError := math.Abs(length-increasedTLength) / totalLength
 		if increasedTError < e {
 			e = increasedTError
 			t += step
 		} else {
-			decreasedTLength := f(t - step)
+			fTStep, err = f(t - step)
+			if err != nil {
+				return 0, err
+			}
+
+			decreasedTLength := fTStep
 			decreasedTError := math.Abs(length-decreasedTLength) / totalLength
 			if decreasedTError < e {
 				e = decreasedTError
@@ -155,5 +171,5 @@ func t2length(length float64, totalLength float64, f func(t float64) float64) fl
 		}
 	}
 
-	return t
+	return t, nil
 }
