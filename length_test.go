@@ -36,11 +36,11 @@ func TestCubicBezierLength(t *testing.T) {
 func TestQuadraticBezierLength(t *testing.T) {
 	testPathLength(t, "M200,300 Q400,50 600,300", 487.771094)
 	testPathLength(t, "M200,300 q200,-250 400,0", 487.771094)
-	testPathLength(t, "M0,100 Q50,-50 100,100 T200,100", 376.84)
-	testPathLength(t, "M0,100 q50,-150 100,0 t100,0", 376.84)
-	testPathLength(t, "M0,100 Q50,-50 100,100 T200,100 T300,100", 565.26)
+	testPathLength(t, "M0,100 Q50,-50 100,100 T200,100", 376.842648)
+	testPathLength(t, "M0,100 q50,-150 100,0 t100,0", 376.842648)
+	testPathLength(t, "M0,100 Q50,-50 100,100 T200,100 T300,100", 565.263972)
 	testPathLength(t, "M0,100 T200,100", 200)
-	testPathLength(t, "M0,100 t200,100", 223.606)
+	testPathLength(t, "M0,100 t200,100", 223.606798)
 }
 
 func testPathLength(t *testing.T, path string, expected float64) {

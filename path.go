@@ -262,36 +262,6 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 
 			prevSegment := segments[i-1]
 			if i > 0 && (prevSegment.Command == 'Q' || prevSegment.Command == 'q' || prevSegment.Command == 'T' || prevSegment.Command == 't') {
-				if curve != internal.EmptyBezier {
-					c := curve.GetC()
-					curve = internal.NewBezier(
-						cur,
-						internal.Point{X: 2*cur.X - c.X, Y: 2*cur.Y - c.Y},
-						internal.Point{X: segment.Args[0], Y: segment.Args[1]},
-						internal.EmptyPoint,
-					)
-				}
-			} else {
-				curve = internal.NewBezier(
-					cur,
-					cur,
-					internal.Point{X: segment.Args[0], Y: segment.Args[1]},
-					internal.EmptyPoint,
-				)
-			}
-
-			if curve != internal.EmptyBezier {
-				r.Length += curve.GetTotalLength()
-				r.parts = append(r.parts, curve)
-				cur = internal.Point{X: segment.Args[0], Y: segment.Args[1]}
-			}
-		} else if segment.Command == 't' {
-			if len(segment.Args) != 2 {
-				return r, fmt.Errorf("malformed path data: '%c' must have 2 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
-			}
-
-			prevSegment := segments[i-1]
-			if i > 0 && (prevSegment.Command == 'Q' || prevSegment.Command == 'q' || prevSegment.Command == 'T' || prevSegment.Command == 't') {
 				curve = internal.NewBezier(
 					cur,
 					internal.Point{X: 2*cur.X - prevPoint.X, Y: 2*cur.Y - prevPoint.Y},
@@ -302,19 +272,37 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 				r.Length += curve.GetTotalLength()
 				r.parts = append(r.parts, curve)
 			} else {
-				linear := internal.NewLinear(
-					cur.X,
-					segment.Args[0],
-					cur.Y,
-					segment.Args[1],
-				)
-
+				linear := internal.NewLinear(cur.X, segment.Args[0], cur.Y, segment.Args[1])
 				r.Length += linear.GetTotalLength()
 				r.parts = append(r.parts, linear)
 			}
 
 			prevPoint = internal.Point{X: 2*cur.X - prevPoint.X, Y: 2*cur.Y - prevPoint.Y}
 			cur = internal.Point{X: segment.Args[0], Y: segment.Args[1]}
+		} else if segment.Command == 't' {
+			if len(segment.Args) != 2 {
+				return r, fmt.Errorf("malformed path data: '%c' must have 2 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
+			}
+
+			prevSegment := segments[i-1]
+			if i > 0 && (prevSegment.Command == 'Q' || prevSegment.Command == 'q' || prevSegment.Command == 'T' || prevSegment.Command == 't') {
+				curve = internal.NewBezier(
+					cur,
+					internal.Point{X: 2*cur.X - prevPoint.X, Y: 2*cur.Y - prevPoint.Y},
+					internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]},
+					internal.EmptyPoint,
+				)
+
+				r.Length += curve.GetTotalLength()
+				r.parts = append(r.parts, curve)
+			} else {
+				linear := internal.NewLinear(cur.X, cur.X+segment.Args[0], cur.Y, cur.Y+segment.Args[1])
+				r.Length += linear.GetTotalLength()
+				r.parts = append(r.parts, linear)
+			}
+
+			prevPoint = internal.Point{X: 2*cur.X - prevPoint.X, Y: 2*cur.Y - prevPoint.Y}
+			cur = internal.Point{X: cur.X + segment.Args[0], Y: cur.Y + segment.Args[1]}
 		} else if segment.Command == 'A' {
 			if len(segment.Args) != 7 {
 				return r, fmt.Errorf("malformed path data: '%c' must have 7 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
