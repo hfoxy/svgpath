@@ -11,8 +11,8 @@ import (
 var ErrEmptyPath = errors.New("empty path")
 var ErrNoPathElements = errors.New("no path elements")
 
-var segmentRegExp = regexp.MustCompile(`/([astvzqmhlc])([^astvzqmhlc]*)/gi`)
-var numberRegExp = regexp.MustCompile(`/-?[0-9]*\.?[0-9]+(?:e[-+]?\d+)?/gi`)
+var segmentRegExp = regexp.MustCompilePOSIX(`([astvzqmhlcASTVZQMHLC])([^astvzqmhlcASTVZQMHLC]*)`)
+var numberRegExp = regexp.MustCompile(`-?[0-9]*\.?[0-9]+(?:e[-+]?\d+)?`)
 
 type Segment struct {
 	Command rune
