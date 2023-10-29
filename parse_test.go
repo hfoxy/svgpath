@@ -89,21 +89,21 @@ func TestParseValues(t *testing.T) {
 	}
 
 	epsilon := 0.000001
-	if floatEqualityCheck(0, 9.6, epsilon) {
+	if inDelta(0, 9.6, epsilon) {
 		t.Fatalf("expected 9.6, got %f", values[0])
-	} else if floatEqualityCheck(1, 20.6, epsilon) {
+	} else if inDelta(1, 20.6, epsilon) {
 		t.Fatalf("expected 20.6, got %f", values[1])
-	} else if floatEqualityCheck(2, 24.4, epsilon) {
+	} else if inDelta(2, 24.4, epsilon) {
 		t.Fatalf("expected 24.4, got %f", values[2])
-	} else if floatEqualityCheck(3, 39.3, epsilon) {
+	} else if inDelta(3, 39.3, epsilon) {
 		t.Fatalf("expected 39.3, got %f", values[3])
-	} else if floatEqualityCheck(4, 45.2, epsilon) {
+	} else if inDelta(4, 45.2, epsilon) {
 		t.Fatalf("expected 45.2, got %f", values[4])
-	} else if floatEqualityCheck(5, 57.1, epsilon) {
+	} else if inDelta(5, 57.1, epsilon) {
 		t.Fatalf("expected 57.1, got %f", values[5])
 	}
 }
 
-func floatEqualityCheck(a float64, b float64, epsilon float64) bool {
+func inDelta(a float64, b float64, epsilon float64) bool {
 	return math.Abs(a-b) < epsilon
 }
