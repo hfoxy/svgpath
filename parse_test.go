@@ -609,7 +609,6 @@ func TestSmoothCurveTo(t *testing.T) {
 }
 
 func TestSmoothQuadraticCurveTo(t *testing.T) {
-	// test.deepEqual(parse("T 1 -2e2"), [["T", 1, -2e2]]);
 	segments, err := Parse("T 1 -2e2")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
