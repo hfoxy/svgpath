@@ -104,6 +104,320 @@ func TestParseValues(t *testing.T) {
 	}
 }
 
+func TestGetPartsSimplerPath(t *testing.T) {
+	path, err := NewFromPath("m10,0l10,0")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	parts, err := path.GetParts()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(parts) != 1 {
+		t.Fatalf("expected 1 part, got %d", len(parts))
+	}
+}
+
+func TestGetPartsSimplePath(t *testing.T) {
+	path, err := NewFromPath("m10,0l10,0l10,0")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	parts, err := path.GetParts()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(parts) != 2 {
+		t.Fatalf("expected 2 parts, got %d", len(parts))
+	}
+
+	p0 := parts[0]
+	if p0.Start.X != 10 {
+		t.Fatalf("expected p0.Start.X to be 10, got %f (%#v)", p0.Start.X, p0)
+	} else if p0.Start.Y != 0 {
+		t.Fatalf("expected p0.Start.Y to be 0, got %f (%#v)", p0.Start.Y, p0)
+	}
+
+	p1 := parts[1]
+	if p1.Start.X != 20 {
+		t.Fatalf("expected p1.Start.X to be 20, got %f (%#v)", p1.Start.X, p0)
+	} else if p1.Start.Y != 0 {
+		t.Fatalf("expected p1.Start.Y to be 0, got %f (%#v)", p1.Start.Y, p0)
+	}
+
+	if p0.End.X != 20 {
+		t.Fatalf("expected p0.End.X to be 20, got %f (%#v)", p0.End.X, p0)
+	} else if p0.End.Y != 0 {
+		t.Fatalf("expected p0.End.Y to be 0, got %f (%#v)", p0.End.Y, p0)
+	}
+
+	if p1.End.X != 30 {
+		t.Fatalf("expected p1.End.X to be 30, got %f (%#v)", p1.End.X, p0)
+	} else if p1.End.Y != 0 {
+		t.Fatalf("expected p1.End.Y to be 0, got %f (%#v)", p1.End.Y, p0)
+	}
+
+	if p0.GetTotalLength() != 10 {
+		t.Fatalf("expected p0.GetTotalLength() to be 10, got %f (%#v)", p0.GetTotalLength(), p0)
+	} else if p1.GetTotalLength() != 10 {
+		t.Fatalf("expected p1.GetTotalLength() to be 10, got %f (%#v)", p1.GetTotalLength(), p0)
+	}
+
+	p0pAt5, err := p0.GetPointAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if p0pAt5.X != 15 {
+		t.Fatalf("expected p0pAt5.X to be 15, got %f (%#v)", p0pAt5.X, p0pAt5)
+	} else if p0pAt5.Y != 0 {
+		t.Fatalf("expected p0pAt5.Y to be 0, got %f (%#v)", p0pAt5.Y, p0pAt5)
+	}
+
+	p1pAt5, err := p1.GetPointAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if p1pAt5.X != 25 {
+		t.Fatalf("expected p1pAt5.X to be 25, got %f (%#v)", p1pAt5.X, p1pAt5)
+	} else if p1pAt5.Y != 0 {
+		t.Fatalf("expected p1pAt5.Y to be 0, got %f (%#v)", p1pAt5.Y, p1pAt5)
+	}
+
+	p0tAt5, err := p0.GetTangentAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if p0tAt5.X != 1 {
+		t.Fatalf("expected p0tAt5.X to be 1, got %f (%#v)", p0tAt5.X, p0tAt5)
+	} else if p0tAt5.Y != 0 {
+		t.Fatalf("expected p0tAt5.Y to be 0, got %f (%#v)", p0tAt5.Y, p0tAt5)
+	}
+
+	p1tAt5, err := p1.GetTangentAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if p1tAt5.X != 1 {
+		t.Fatalf("expected p1tAt5.X to be 1, got %f (%#v)", p1tAt5.X, p1tAt5)
+	} else if p1tAt5.Y != 0 {
+		t.Fatalf("expected p1tAt5.Y to be 0, got %f (%#v)", p1tAt5.Y, p1tAt5)
+	}
+
+	p0propAt5, err := p0.GetPropertiesAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if p0propAt5.X != 15 {
+		t.Fatalf("expected p0propAt5.X to be 15, got %f (%#v)", p0propAt5.X, p0propAt5)
+	} else if p0propAt5.Y != 0 {
+		t.Fatalf("expected p0propAt5.Y to be 0, got %f (%#v)", p0propAt5.Y, p0propAt5)
+	} else if p0propAt5.TangentX != 1 {
+		t.Fatalf("expected p0propAt5.TangentX to be 1, got %f (%#v)", p0propAt5.TangentX, p0propAt5)
+	} else if p0propAt5.TangentY != 0 {
+		t.Fatalf("expected p0propAt5.TangentY to be 0, got %f (%#v)", p0propAt5.TangentY, p0propAt5)
+	}
+
+	p1propAt5, err := p1.GetPropertiesAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if p1propAt5.X != 25 {
+		t.Fatalf("expected p1propAt5.X to be 25, got %f (%#v)", p1propAt5.X, p1propAt5)
+	} else if p1propAt5.Y != 0 {
+		t.Fatalf("expected p1propAt5.Y to be 0, got %f (%#v)", p1propAt5.Y, p1propAt5)
+	} else if p1propAt5.TangentX != 1 {
+		t.Fatalf("expected p1propAt5.TangentX to be 1, got %f (%#v)", p1propAt5.TangentX, p1propAt5)
+	} else if p1propAt5.TangentY != 0 {
+		t.Fatalf("expected p1propAt5.TangentY to be 0, got %f (%#v)", p1propAt5.TangentY, p1propAt5)
+	}
+}
+
+func TestGetPartsSimplePathDistances(t *testing.T) {
+	path, err := NewFromPath("M100,200 C100,100 250,100 250,200 S400,300 400,200")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	parts, err := path.GetParts()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(parts) != 2 {
+		t.Fatalf("expected 2 parts, got %d", len(parts))
+	}
+
+	p0 := parts[0]
+	p0pAt5, err := p0.GetPointAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	pAtp05, err := path.GetPointAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if p0pAt5.X != pAtp05.X {
+		t.Fatalf("expected p0pAt5.X to be %f, got %f", pAtp05.X, p0pAt5.X)
+	} else if p0pAt5.Y != pAtp05.Y {
+		t.Fatalf("expected p0pAt5.Y to be %f, got %f", pAtp05.Y, p0pAt5.Y)
+	}
+
+	p1 := parts[1]
+	p1pAt5, err := p1.GetPointAtLength(5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	pAtp15, err := path.GetPointAtLength(p0.GetTotalLength() + 5)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if p1pAt5.X != pAtp15.X {
+		t.Fatalf("expected p1pAt5.X to be %f, got %f", pAtp15.X, p1pAt5.X)
+	} else if p1pAt5.Y != pAtp15.Y {
+		t.Fatalf("expected p1pAt5.Y to be %f, got %f", pAtp15.Y, p1pAt5.Y)
+	}
+}
+
+func TestOverloadedMoveTo1(t *testing.T) {
+	segments, err := Parse("m 12.5,52 39,0 0,-40 -39,0 z")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(segments) != 5 {
+		t.Fatalf("expected 5 segments, got %d: %v", len(segments), segments)
+	}
+
+	s0 := segments[0]
+	if s0.Command != 'm' {
+		t.Fatalf("expected s0.Command to be 'm', got %c", s0.Command)
+	} else if len(s0.Args) != 2 {
+		log.Printf("s0: %#v", s0)
+		t.Fatalf("expected s0.Args to have 2 values, got %d", len(s0.Args))
+	} else if s0.Args[0] != 12.5 {
+		t.Fatalf("expected s0.Args[0] to be 12.5, got %f", s0.Args[0])
+	} else if s0.Args[1] != 52 {
+		t.Fatalf("expected s0.Args[1] to be 52, got %f", s0.Args[1])
+	}
+
+	s1 := segments[1]
+	if s1.Command != 'l' {
+		t.Fatalf("expected s1.Command to be 'l', got %c", s1.Command)
+	} else if len(s1.Args) != 2 {
+		t.Fatalf("expected s1.Args to have 2 values, got %d", len(s1.Args))
+	} else if s1.Args[0] != 39 {
+		t.Fatalf("expected s1.Args[0] to be 39, got %f", s1.Args[0])
+	} else if s1.Args[1] != 0 {
+		t.Fatalf("expected s1.Args[1] to be 0, got %f", s1.Args[1])
+	}
+
+	s2 := segments[2]
+	if s2.Command != 'l' {
+		t.Fatalf("expected s2.Command to be 'l', got %c", s2.Command)
+	} else if len(s2.Args) != 2 {
+		t.Fatalf("expected s2.Args to have 2 values, got %d", len(s2.Args))
+	} else if s2.Args[0] != 0 {
+		t.Fatalf("expected s2.Args[0] to be 0, got %f", s2.Args[0])
+	} else if s2.Args[1] != -40 {
+		t.Fatalf("expected s2.Args[1] to be -40, got %f", s2.Args[1])
+	}
+
+	s3 := segments[3]
+	if s3.Command != 'l' {
+		t.Fatalf("expected s3.Command to be 'l', got %c", s3.Command)
+	} else if len(s3.Args) != 2 {
+		t.Fatalf("expected s3.Args to have 2 values, got %d", len(s3.Args))
+	} else if s3.Args[0] != -39 {
+		t.Fatalf("expected s3.Args[0] to be -39, got %f", s3.Args[0])
+	} else if s3.Args[1] != 0 {
+		t.Fatalf("expected s3.Args[1] to be 0, got %f", s3.Args[1])
+	}
+
+	s4 := segments[4]
+	if s4.Command != 'z' {
+		t.Fatalf("expected s4.Command to be 'z', got %c", s4.Command)
+	} else if len(s4.Args) != 0 {
+		t.Fatalf("expected s4.Args to have 0 values, got %d", len(s4.Args))
+	}
+}
+
+func TestOverloadedMoveTo2(t *testing.T) {
+	segments, err := Parse("M 12.5,52 39,0 0,-40 -39,0 z")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if len(segments) != 5 {
+		t.Fatalf("expected 5 segments, got %d: %v", len(segments), segments)
+	}
+
+	s0 := segments[0]
+	if s0.Command != 'M' {
+		t.Fatalf("expected s0.Command to be 'M', got %c", s0.Command)
+	} else if len(s0.Args) != 2 {
+		log.Printf("s0: %#v", s0)
+		t.Fatalf("expected s0.Args to have 2 values, got %d", len(s0.Args))
+	} else if s0.Args[0] != 12.5 {
+		t.Fatalf("expected s0.Args[0] to be 12.5, got %f", s0.Args[0])
+	} else if s0.Args[1] != 52 {
+		t.Fatalf("expected s0.Args[1] to be 52, got %f", s0.Args[1])
+	}
+
+	s1 := segments[1]
+	if s1.Command != 'L' {
+		t.Fatalf("expected s1.Command to be 'L', got %c", s1.Command)
+	} else if len(s1.Args) != 2 {
+		t.Fatalf("expected s1.Args to have 2 values, got %d", len(s1.Args))
+	} else if s1.Args[0] != 39 {
+		t.Fatalf("expected s1.Args[0] to be 39, got %f", s1.Args[0])
+	} else if s1.Args[1] != 0 {
+		t.Fatalf("expected s1.Args[1] to be 0, got %f", s1.Args[1])
+	}
+
+	s2 := segments[2]
+	if s2.Command != 'L' {
+		t.Fatalf("expected s2.Command to be 'L', got %c", s2.Command)
+	} else if len(s2.Args) != 2 {
+		t.Fatalf("expected s2.Args to have 2 values, got %d", len(s2.Args))
+	} else if s2.Args[0] != 0 {
+		t.Fatalf("expected s2.Args[0] to be 0, got %f", s2.Args[0])
+	} else if s2.Args[1] != -40 {
+		t.Fatalf("expected s2.Args[1] to be -40, got %f", s2.Args[1])
+	}
+
+	s3 := segments[3]
+	if s3.Command != 'L' {
+		t.Fatalf("expected s3.Command to be 'L', got %c", s3.Command)
+	} else if len(s3.Args) != 2 {
+		t.Fatalf("expected s3.Args to have 2 values, got %d", len(s3.Args))
+	} else if s3.Args[0] != -39 {
+		t.Fatalf("expected s3.Args[0] to be -39, got %f", s3.Args[0])
+	} else if s3.Args[1] != 0 {
+		t.Fatalf("expected s3.Args[1] to be 0, got %f", s3.Args[1])
+	}
+
+	s4 := segments[4]
+	if s4.Command != 'z' {
+		t.Fatalf("expected s4.Command to be 'z', got %c", s4.Command)
+	} else if len(s4.Args) != 0 {
+		t.Fatalf("expected s4.Args to have 0 values, got %d", len(s4.Args))
+	}
+}
+
 func inDelta(a float64, b float64, epsilon float64) bool {
 	return math.Abs(a-b) < epsilon
 }

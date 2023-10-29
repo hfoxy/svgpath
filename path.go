@@ -103,7 +103,7 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 			r.parts = append(r.parts, internal.NewLinear(cur.X, cur.X, cur.Y, cur.Y+segment.Args[0]))
 			cur = internal.Point{X: cur.X, Y: cur.Y + segment.Args[0]}
 		} else if segment.Command == 'z' || segment.Command == 'Z' {
-			if len(segment.Args) != 1 {
+			if len(segment.Args) != 0 {
 				return r, fmt.Errorf("malformed path data: '%c' must have 0 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
 			}
 
@@ -127,15 +127,6 @@ func NewFromSegments(segments []Segment) (SVGPath, error) {
 			cur = internal.Point{X: segment.Args[4], Y: segment.Args[5]}
 		} else if segment.Command == 'c' {
 			if len(segment.Args) != 6 {
-				recheckArgs, err2 := parseValues(segment.Raw[1:])
-				if err2 != nil {
-					return r, fmt.Errorf("malformed path data: '%c' => '%s': %w", segment.Command, segment.Raw, err2)
-				}
-
-				if len(recheckArgs) != 6 {
-					return r, fmt.Errorf("[recheck] malformed path data: '%c' must have 6 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
-				}
-
 				return r, fmt.Errorf("malformed path data: '%c' must have 6 elements and has %d: '%s'", segment.Command, len(segment.Args), segment.Raw)
 			}
 
@@ -448,7 +439,8 @@ func (p SVGPath) GetParts() ([]internal.PartProperties, error) {
 				return nil, err
 			}
 
-			p1, err := part.GetPointAtLength(p.partialLengths[i] - p.partialLengths[i-1])
+			l := p.partialLengths[i] - p.partialLengths[i-1]
+			p1, err := part.GetPointAtLength(l)
 			if err != nil {
 				return nil, err
 			}
@@ -456,10 +448,8 @@ func (p SVGPath) GetParts() ([]internal.PartProperties, error) {
 			parts = append(parts, internal.NewPartProperties(
 				p0,
 				p1,
-				p.partialLengths[i+1]-p.partialLengths[i],
-				part.GetPointAtLength,
-				part.GetTangentAtLength,
-				part.GetPropertiesAtLength,
+				l,
+				part,
 			))
 		}
 	}

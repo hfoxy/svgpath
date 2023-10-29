@@ -8,29 +8,23 @@ type Properties interface {
 }
 
 type PartProperties struct {
-	Start                 Point
-	End                   Point
-	Length                float64
-	getPointAtLength      func(float64) (Point, error)
-	getTangentAtLength    func(float64) (Point, error)
-	getPropertiesAtLength func(float64) (PointProperties, error)
+	Start  Point
+	End    Point
+	Length float64
+	part   Part
 }
 
 func NewPartProperties(
 	start Point,
 	end Point,
 	length float64,
-	getPointAtLength func(float64) (Point, error),
-	getTangentAtLength func(float64) (Point, error),
-	getPropertiesAtLength func(float64) (PointProperties, error),
+	part Part,
 ) PartProperties {
 	return PartProperties{
-		Start:                 start,
-		End:                   end,
-		Length:                length,
-		getPointAtLength:      getPointAtLength,
-		getTangentAtLength:    getTangentAtLength,
-		getPropertiesAtLength: getPropertiesAtLength,
+		Start:  start,
+		End:    end,
+		Length: length,
+		part:   part,
 	}
 }
 
@@ -39,15 +33,15 @@ func (p PartProperties) GetTotalLength() float64 {
 }
 
 func (p PartProperties) GetPointAtLength(pos float64) (Point, error) {
-	return p.getPointAtLength(pos)
+	return p.part.GetPointAtLength(pos)
 }
 
 func (p PartProperties) GetTangentAtLength(pos float64) (Point, error) {
-	return p.getTangentAtLength(pos)
+	return p.part.GetTangentAtLength(pos)
 }
 
 func (p PartProperties) GetPropertiesAtLength(pos float64) (PointProperties, error) {
-	return p.getPropertiesAtLength(pos)
+	return p.part.GetPropertiesAtLength(pos)
 }
 
 type Part interface {

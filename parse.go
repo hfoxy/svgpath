@@ -11,7 +11,7 @@ import (
 var ErrEmptyPath = errors.New("empty path")
 var ErrNoPathElements = errors.New("no path elements")
 
-var segmentRegExp = regexp.MustCompilePOSIX(`([astvzqmhlcASTVZQMHLC])([^astvzqmhlcASTVZQMHLC]*)`)
+var segmentRegExp = regexp.MustCompile(`(?mi)([astvzqmhlc])([^astvzqmhlc]*|$)`)
 var numberRegExp = regexp.MustCompile(`-?[0-9]*\.?[0-9]+(?:e[-+]?\d+)?`)
 
 type Segment struct {
@@ -55,7 +55,9 @@ func Parse(path string) ([]Segment, error) {
 		}
 
 		if t == 'm' && len(args) > 2 {
-			acc = append(acc, Segment{Command: t, Args: args, Raw: segment})
+			acc = append(acc, Segment{Command: command, Args: args[:2], Raw: segment})
+			args = args[2:]
+
 			t = 'l'
 			if command == 'M' {
 				command = 'L'
@@ -64,11 +66,18 @@ func Parse(path string) ([]Segment, error) {
 			}
 		}
 
-		for len(args) > 0 {
+		for len(args) >= 0 {
 			expectedLength := length[t]
-			// log.Printf("command: %c, args: (expected %c:%d, got %d) => %v", command, t, length[t], len(args), args)
+			if expectedLength == 0 {
+				//log.Printf("[add] command: %c, args: (expected %c:%d, got %d) => %v", command, t, expectedLength, len(args), args)
+				acc = append(acc, Segment{Command: command, Args: args, Raw: segment})
+				break
+			}
+
+			//log.Printf("command: %c, args: (expected %c:%d, got %d) => %v", command, t, expectedLength, len(args), args)
 
 			if len(args) == expectedLength {
+				//log.Printf("[add] command: %c, args: (expected %c:%d, got %d) => %v", command, t, expectedLength, len(args), args)
 				acc = append(acc, Segment{Command: command, Args: args, Raw: segment})
 				break
 			}
@@ -77,8 +86,10 @@ func Parse(path string) ([]Segment, error) {
 				return acc, fmt.Errorf("malformed path data: '%c' must have %d elements and has %d: '%s'", command, length[t], len(args), segment)
 			}
 
+			trimmedArgs := args[0:expectedLength]
+			//log.Printf("[add] command: %c, args: (expected %c:%d, got %d) => %v", command, t, expectedLength, len(trimmedArgs), trimmedArgs)
+			acc = append(acc, Segment{Command: command, Args: trimmedArgs, Raw: segment})
 			args = args[expectedLength:]
-			acc = append(acc, Segment{Command: command, Args: args, Raw: segment})
 		}
 
 		return acc, nil

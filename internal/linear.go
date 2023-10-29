@@ -12,7 +12,7 @@ type Linear struct {
 	tangent Point
 }
 
-func NewLinear(x0 float64, y0 float64, x1 float64, y1 float64) Linear {
+func NewLinear(x0 float64, x1 float64, y0 float64, y1 float64) Linear {
 	length := math.Sqrt(math.Pow(x0-x1, 2) + math.Pow(y0-y1, 2))
 	tangent := Point{
 		X: (x1 - x0) / length,
